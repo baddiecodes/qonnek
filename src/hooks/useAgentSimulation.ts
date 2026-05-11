@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 /* ============================================
-   AGENT SIMULATION ENGINE
-   Pentagon-style autonomous AI workforce sim.
-   Pure frontend -- timers + random state machines.
+   AGENT SIMULATION ENGINE — v3 (perf-optimized)
+   Progress interval: 500ms (was 300ms).
    ============================================ */
 
 export type AgentRole = "content" | "research" | "distribution";
@@ -13,7 +12,7 @@ export interface AgentTask {
   id: string;
   label: string;
   startedAt: number;
-  duration: number; // ms
+  duration: number;
 }
 
 export interface AgentEvent {
@@ -32,9 +31,9 @@ export interface AgentState {
   emoji: string;
   status: AgentStatus;
   currentTask: AgentTask | null;
-  progress: number; // 0-100
+  progress: number;
   completedTasks: number;
-  totalPayout: number; // SOL
+  totalPayout: number;
   recentAction: string;
   color: "cyan" | "violet" | "emerald";
 }
@@ -47,8 +46,6 @@ export interface SimulationState {
   totalTasks: number;
 }
 
-// --- Task pools per agent ---
-
 const CONTENT_TASKS = [
   "Drafting blog post on DeFi yields",
   "Writing Twitter thread on Solana speed",
@@ -56,8 +53,6 @@ const CONTENT_TASKS = [
   "Creating product announcement copy",
   "Composing investor update email",
   "Writing docs for new API endpoint",
-  "Drafting press release for launch",
-  "Generating community FAQ responses",
 ];
 
 const RESEARCH_TASKS = [
@@ -65,10 +60,8 @@ const RESEARCH_TASKS = [
   "Scanning competitor token launches",
   "Compiling market sentiment report",
   "Auditing smart contract patterns",
-  "Reviewing governance proposal #47",
   "Tracking whale wallet movements",
   "Benchmarking gas fee trends",
-  "Evaluating yield farming strategies",
 ];
 
 const DISTRIBUTION_TASKS = [
@@ -76,10 +69,8 @@ const DISTRIBUTION_TASKS = [
   "Optimizing email delivery pipeline",
   "A/B testing subject lines",
   "Publishing blog to CMS",
-  "Syncing content to partner feeds",
   "Deploying social media campaign",
   "Distributing report to stakeholders",
-  "Updating analytics dashboard data",
 ];
 
 const TASK_POOLS: Record<AgentRole, string[]> = {
@@ -89,24 +80,9 @@ const TASK_POOLS: Record<AgentRole, string[]> = {
 };
 
 const THINKING_MESSAGES: Record<AgentRole, string[]> = {
-  content: [
-    "Analyzing tone and audience...",
-    "Reviewing brand guidelines...",
-    "Generating outline structure...",
-    "Checking content calendar...",
-  ],
-  research: [
-    "Querying on-chain data...",
-    "Cross-referencing sources...",
-    "Building data models...",
-    "Scanning recent blocks...",
-  ],
-  distribution: [
-    "Checking channel availability...",
-    "Optimizing delivery schedule...",
-    "Validating recipient lists...",
-    "Preparing payload format...",
-  ],
+  content: ["Analyzing tone and audience...", "Reviewing brand guidelines...", "Generating outline structure..."],
+  research: ["Querying on-chain data...", "Cross-referencing sources...", "Building data models..."],
+  distribution: ["Checking channel availability...", "Optimizing delivery schedule...", "Validating recipient lists..."],
 };
 
 function pick<T>(arr: T[]): T {
@@ -122,42 +98,9 @@ function randomBetween(min: number, max: number): number {
 }
 
 const INITIAL_AGENTS: AgentState[] = [
-  {
-    id: "content",
-    name: "Content Agent",
-    emoji: "🖊",
-    status: "idle",
-    currentTask: null,
-    progress: 0,
-    completedTasks: 0,
-    totalPayout: 0,
-    recentAction: "Initializing...",
-    color: "cyan",
-  },
-  {
-    id: "research",
-    name: "Research Agent",
-    emoji: "🔬",
-    status: "idle",
-    currentTask: null,
-    progress: 0,
-    completedTasks: 0,
-    totalPayout: 0,
-    recentAction: "Initializing...",
-    color: "violet",
-  },
-  {
-    id: "distribution",
-    name: "Distribution Agent",
-    emoji: "📡",
-    status: "idle",
-    currentTask: null,
-    progress: 0,
-    completedTasks: 0,
-    totalPayout: 0,
-    recentAction: "Initializing...",
-    color: "emerald",
-  },
+  { id: "content", name: "Content Agent", emoji: "🖊", status: "idle", currentTask: null, progress: 0, completedTasks: 0, totalPayout: 0, recentAction: "Initializing...", color: "cyan" },
+  { id: "research", name: "Research Agent", emoji: "🔬", status: "idle", currentTask: null, progress: 0, completedTasks: 0, totalPayout: 0, recentAction: "Initializing...", color: "violet" },
+  { id: "distribution", name: "Distribution Agent", emoji: "📡", status: "idle", currentTask: null, progress: 0, completedTasks: 0, totalPayout: 0, recentAction: "Initializing...", color: "emerald" },
 ];
 
 export function useAgentSimulation(): SimulationState {
@@ -167,8 +110,7 @@ export function useAgentSimulation(): SimulationState {
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const addEvent = useCallback((event: Omit<AgentEvent, "id" | "timestamp">) => {
-    const fullEvent: AgentEvent = { ...event, id: uid(), timestamp: Date.now() };
-    setEvents((prev) => [fullEvent, ...prev].slice(0, 50)); // Keep last 50
+    setEvents((prev) => [{ ...event, id: uid(), timestamp: Date.now() }, ...prev].slice(0, 40));
   }, []);
 
   const updateAgent = useCallback(
@@ -178,10 +120,8 @@ export function useAgentSimulation(): SimulationState {
     []
   );
 
-  // --- Core lifecycle for one agent ---
   const runAgentCycle = useCallback(
     (agentId: AgentRole, agentName: string) => {
-      // Phase 1: THINKING
       const thinkMsg = pick(THINKING_MESSAGES[agentId]);
       updateAgent(agentId, { status: "thinking", recentAction: thinkMsg, progress: 0 });
       addEvent({ agentId, agentName, type: "thinking", message: thinkMsg });
@@ -189,7 +129,6 @@ export function useAgentSimulation(): SimulationState {
       const thinkDuration = randomBetween(2000, 4000);
 
       const thinkTimer = setTimeout(() => {
-        // Phase 2: WORKING on a task
         const taskLabel = pick(TASK_POOLS[agentId]);
         const taskDuration = randomBetween(6000, 14000);
         const task: AgentTask = { id: uid(), label: taskLabel, startedAt: Date.now(), duration: taskDuration };
@@ -197,7 +136,7 @@ export function useAgentSimulation(): SimulationState {
         updateAgent(agentId, { status: "working", currentTask: task, progress: 0, recentAction: taskLabel });
         addEvent({ agentId, agentName, type: "task_start", message: taskLabel });
 
-        // Animate progress
+        // Progress at 500ms (was 300ms)
         const progressInterval = setInterval(() => {
           setAgents((prev) =>
             prev.map((a) => {
@@ -207,31 +146,17 @@ export function useAgentSimulation(): SimulationState {
               return { ...a, progress: pct };
             })
           );
-        }, 300);
+        }, 500);
 
         const workTimer = setTimeout(() => {
           clearInterval(progressInterval);
 
-          // Phase 3: COMPLETED
-          updateAgent(agentId, {
-            status: "completed",
-            progress: 100,
-            recentAction: `Completed: ${taskLabel}`,
-          });
+          updateAgent(agentId, { status: "completed", progress: 100, recentAction: `Completed: ${taskLabel}` });
           addEvent({ agentId, agentName, type: "task_complete", message: `Completed: ${taskLabel}` });
 
-          // Phase 4: PAYOUT (brief)
           const payoutTimer = setTimeout(() => {
             const payoutAmount = parseFloat((Math.random() * 0.008 + 0.002).toFixed(4));
-            updateAgent(agentId, (prev) => ({
-              ...prev,
-              status: "payout",
-              completedTasks: prev.completedTasks + 1,
-              totalPayout: parseFloat((prev.totalPayout + payoutAmount).toFixed(4)),
-              recentAction: `Payout: ${payoutAmount} SOL`,
-            }));
 
-            // Fix: need to use setAgents for increment
             setAgents((prev) =>
               prev.map((a) =>
                 a.id === agentId
@@ -247,27 +172,14 @@ export function useAgentSimulation(): SimulationState {
             );
 
             addEvent({
-              agentId,
-              agentName,
-              type: "payout",
-              message: `Payout: ${payoutAmount} SOL �� CASH (devnet simulation)`,
+              agentId, agentName, type: "payout",
+              message: `Payout: ${payoutAmount} SOL — CASH (devnet)`,
               payoutSol: payoutAmount,
             });
 
-            // Phase 5: Back to IDLE, then restart cycle after a pause
             const idleTimer = setTimeout(() => {
-              updateAgent(agentId, {
-                status: "idle",
-                currentTask: null,
-                progress: 0,
-                recentAction: "Awaiting next task...",
-              });
-
-              // Random pause before next cycle
-              const pauseTimer = setTimeout(() => {
-                runAgentCycle(agentId, agentName);
-              }, randomBetween(3000, 8000));
-
+              updateAgent(agentId, { status: "idle", currentTask: null, progress: 0, recentAction: "Awaiting next task..." });
+              const pauseTimer = setTimeout(() => runAgentCycle(agentId, agentName), randomBetween(3000, 8000));
               timersRef.current.set(`${agentId}-pause`, pauseTimer);
             }, 2000);
 
@@ -286,22 +198,17 @@ export function useAgentSimulation(): SimulationState {
     [updateAgent, addEvent]
   );
 
-  // --- Start all agents on mount with staggered delays ---
   useEffect(() => {
     if (!isRunning) return;
-
-    const startTimers = INITIAL_AGENTS.map((agent, i) => {
-      return setTimeout(() => {
-        runAgentCycle(agent.id, agent.name);
-      }, i * 2000 + randomBetween(500, 1500)); // Stagger starts
-    });
-
+    const startTimers = INITIAL_AGENTS.map((agent, i) =>
+      setTimeout(() => runAgentCycle(agent.id, agent.name), i * 2000 + randomBetween(500, 1500))
+    );
     return () => {
       startTimers.forEach(clearTimeout);
       timersRef.current.forEach((timer) => clearTimeout(timer));
       timersRef.current.clear();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning]);
 
   const totalPayouts = agents.reduce((sum, a) => sum + a.totalPayout, 0);
