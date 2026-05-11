@@ -1,16 +1,10 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Bot,
-  Vault,
-  ArrowLeftRight,
-  Activity,
-  Menu,
-  X,
+  LayoutDashboard, Bot, Vault, ArrowLeftRight, Activity, Menu, X,
 } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
 
 const links = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -20,75 +14,53 @@ const links = [
   { to: "/activity", label: "Activity", icon: Activity },
 ];
 
-// Bottom nav shows first 4 links (most used), 5th is the "More" drawer trigger
-const BOTTOM_NAV_LINKS = links.slice(0, 4);
+const BOTTOM_NAV = links.slice(0, 4);
 
 export default function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 
-  // Close drawer on route change
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
 
-  // Lock body scroll when drawer is open
   useEffect(() => {
-    if (drawerOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    document.body.style.overflow = drawerOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [drawerOpen]);
+
+  const openDrawer = useCallback(() => setDrawerOpen(true), []);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* ========== DESKTOP SIDEBAR ========== */}
+      {/* Desktop sidebar */}
       <aside
         className="hidden md:flex w-[220px] flex-col border-r border-sidebar-border shrink-0"
         style={{ background: "var(--gradient-sidebar)" }}
       >
-        <div className="px-5 pt-5 pb-6">
-          <span className="text-lg font-extrabold gradient-text tracking-tight select-none">
-            QONNEK
-          </span>
-          <p className="text-[10px] text-muted-foreground/40 mt-0.5 font-medium tracking-wide">
-            AI Agent Payroll
-          </p>
+        <div className="px-5 pt-5 pb-5">
+          <span className="text-lg font-extrabold gradient-text tracking-tight select-none">QONNEK</span>
+          <p className="text-[11px] text-muted-foreground/50 mt-0.5 font-medium">AI Agent Payroll</p>
         </div>
 
-        <nav className="flex-1 space-y-0.5 px-3">
+        <nav className="flex-1 space-y-0.5 px-3" role="navigation" aria-label="Main navigation">
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200 ${
+                `relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors duration-150 ${
                   isActive
                     ? "bg-sidebar-accent text-primary"
-                    : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/40"
+                    : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <motion.div
-                      layoutId="sidebar-indicator"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    />
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary" />
                   )}
-                  <Icon
-                    className={`h-4 w-4 transition-colors duration-200 ${
-                      isActive
-                        ? "text-primary"
-                        : "text-muted-foreground group-hover:text-sidebar-accent-foreground"
-                    }`}
-                  />
+                  <Icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                   {label}
                 </>
               )}
@@ -98,38 +70,29 @@ export default function AppLayout() {
 
         <div className="px-4 py-4 border-t border-sidebar-border/60">
           <div className="flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-            <span className="text-[10px] font-mono text-success/70 uppercase tracking-[0.15em]">
-              devnet
-            </span>
+            <div className="h-2 w-2 rounded-full bg-success" />
+            <span className="text-[11px] font-mono text-success/80 uppercase tracking-wide">devnet</span>
           </div>
         </div>
       </aside>
 
-      {/* ========== MAIN CONTENT ========== */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        {/* Header */}
-        <header className="flex items-center justify-between border-b border-border/60 px-4 sm:px-6 py-2.5 backdrop-blur-sm bg-background/80 shrink-0">
-          {/* Mobile: hamburger + logo */}
+        <header className="flex items-center justify-between border-b border-border/50 px-4 sm:px-6 h-14 shrink-0 bg-background">
           <div className="flex items-center gap-3 md:hidden">
             <button
-              onClick={() => setDrawerOpen(true)}
-              className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary/50 transition-colors focus-ring"
+              onClick={openDrawer}
+              className="p-2 -ml-2 rounded-lg hover:bg-secondary/50 transition-colors focus-ring"
               aria-label="Open navigation"
             >
               <Menu className="h-5 w-5 text-muted-foreground" />
             </button>
-            <span className="text-lg font-extrabold gradient-text select-none">
-              QONNEK
-            </span>
+            <span className="text-base font-bold gradient-text select-none">QONNEK</span>
           </div>
 
-          {/* Desktop: devnet indicator */}
           <div className="hidden md:flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-            <span className="text-[11px] text-muted-foreground/50 font-medium">
-              Solana Devnet
-            </span>
+            <div className="h-2 w-2 rounded-full bg-success" />
+            <span className="text-[11px] text-muted-foreground font-medium">Solana Devnet</span>
           </div>
 
           <div className="ml-auto">
@@ -137,7 +100,6 @@ export default function AppLayout() {
           </div>
         </header>
 
-        {/* Page content — extra bottom padding on mobile for bottom nav */}
         <main className="flex-1 overflow-y-auto">
           <div className="px-4 sm:px-6 py-5 sm:py-6 pb-24 md:pb-6 max-w-[1360px] mx-auto">
             <Outlet />
@@ -145,78 +107,53 @@ export default function AppLayout() {
         </main>
       </div>
 
-      {/* ========== MOBILE SLIDE-OVER DRAWER ========== */}
+      {/* Mobile slide-over drawer */}
       <AnimatePresence>
         {drawerOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden"
-              onClick={() => setDrawerOpen(false)}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-50 bg-black/50 md:hidden"
+              onClick={closeDrawer}
             />
-
-            {/* Drawer panel */}
             <motion.aside
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 400, damping: 35 }}
+              transition={{ type: "spring", stiffness: 400, damping: 40 }}
               className="fixed inset-y-0 left-0 z-50 w-[260px] flex flex-col border-r border-sidebar-border md:hidden"
               style={{ background: "var(--gradient-sidebar)" }}
             >
-              {/* Drawer header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-4">
                 <div>
-                  <span className="text-lg font-extrabold gradient-text tracking-tight select-none">
-                    QONNEK
-                  </span>
-                  <p className="text-[10px] text-muted-foreground/40 mt-0.5 font-medium tracking-wide">
-                    AI Agent Payroll
-                  </p>
+                  <span className="text-lg font-extrabold gradient-text tracking-tight select-none">QONNEK</span>
+                  <p className="text-[11px] text-muted-foreground/50 mt-0.5 font-medium">AI Agent Payroll</p>
                 </div>
-                <button
-                  onClick={() => setDrawerOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-secondary/50 transition-colors focus-ring"
-                  aria-label="Close navigation"
-                >
+                <button onClick={closeDrawer} className="p-2 rounded-lg hover:bg-secondary/50 transition-colors focus-ring" aria-label="Close navigation">
                   <X className="h-5 w-5 text-muted-foreground" />
                 </button>
               </div>
 
-              {/* Drawer nav links */}
-              <nav className="flex-1 space-y-0.5 px-3 pt-2">
+              <nav className="flex-1 space-y-0.5 px-3 pt-2" role="navigation" aria-label="Mobile navigation">
                 {links.map(({ to, label, icon: Icon }) => (
                   <NavLink
                     key={to}
                     to={to}
                     className={({ isActive }) =>
-                      `group relative flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200 ${
+                      `relative flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors duration-150 ${
                         isActive
                           ? "bg-sidebar-accent text-primary"
-                          : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/40"
+                          : "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50"
                       }`
                     }
                   >
                     {({ isActive }) => (
                       <>
-                        {isActive && (
-                          <motion.div
-                            layoutId="drawer-indicator"
-                            className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary"
-                            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                          />
-                        )}
-                        <Icon
-                          className={`h-4.5 w-4.5 transition-colors duration-200 ${
-                            isActive
-                              ? "text-primary"
-                              : "text-muted-foreground group-hover:text-sidebar-accent-foreground"
-                          }`}
-                        />
+                        {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary" />}
+                        <Icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                         {label}
                       </>
                     )}
@@ -224,13 +161,10 @@ export default function AppLayout() {
                 ))}
               </nav>
 
-              {/* Drawer footer */}
               <div className="px-4 py-4 border-t border-sidebar-border/60">
                 <div className="flex items-center gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                  <span className="text-[10px] font-mono text-success/70 uppercase tracking-[0.15em]">
-                    devnet
-                  </span>
+                  <div className="h-2 w-2 rounded-full bg-success" />
+                  <span className="text-[11px] font-mono text-success/80 uppercase tracking-wide">devnet</span>
                 </div>
               </div>
             </motion.aside>
@@ -238,51 +172,33 @@ export default function AppLayout() {
         )}
       </AnimatePresence>
 
-      {/* ========== MOBILE BOTTOM NAV ========== */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-border/60 backdrop-blur-xl bg-background/90">
-        <div className="flex items-center justify-around px-2 py-1.5 safe-area-bottom">
-          {BOTTOM_NAV_LINKS.map(({ to, label, icon: Icon }) => {
+      {/* Mobile bottom nav — min 44px touch targets */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-border/50 bg-background" role="navigation" aria-label="Bottom navigation">
+        <div className="flex items-stretch justify-around safe-area-bottom">
+          {BOTTOM_NAV.map(({ to, label, icon: Icon }) => {
             const isActive = location.pathname === to;
             return (
               <NavLink
                 key={to}
                 to={to}
-                className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors duration-150"
+                className="relative flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[56px] px-2"
               >
                 {isActive && (
-                  <motion.div
-                    layoutId="bottomnav-indicator"
-                    className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-[2px] w-6 rounded-full bg-primary"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[2px] w-8 rounded-full bg-primary" />
                 )}
-                <Icon
-                  className={`h-5 w-5 transition-colors duration-150 ${
-                    isActive ? "text-primary" : "text-muted-foreground/50"
-                  }`}
-                />
-                <span
-                  className={`text-[9px] font-medium transition-colors duration-150 ${
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground/40"
-                  }`}
-                >
+                <Icon className={`h-5 w-5 ${isActive ? "text-primary" : "text-muted-foreground/50"}`} />
+                <span className={`text-[10px] font-medium ${isActive ? "text-primary" : "text-muted-foreground/40"}`}>
                   {label}
                 </span>
               </NavLink>
             );
           })}
-
-          {/* More button — opens drawer for full nav */}
           <button
-            onClick={() => setDrawerOpen(true)}
-            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors"
+            onClick={openDrawer}
+            className="flex flex-col items-center justify-center gap-0.5 min-h-[52px] min-w-[56px] px-2"
           >
             <Menu className="h-5 w-5 text-muted-foreground/50" />
-            <span className="text-[9px] font-medium text-muted-foreground/40">
-              More
-            </span>
+            <span className="text-[10px] font-medium text-muted-foreground/40">More</span>
           </button>
         </div>
       </nav>
