@@ -1,7 +1,9 @@
 import { useAgentWallet } from "@/hooks/useAgentWallet";
+import { useConnectedWallet } from "@/hooks/useConnectedWallet";
 import { useAgentSimulation } from "@/hooks/useAgentSimulation";
 import { useTreasurySimulation } from "@/hooks/useTreasurySimulation";
 import AgentWalletCard from "@/components/AgentWalletCard";
+import ConnectedWalletCard from "@/components/ConnectedWalletCard";
 import PayrollTransfer from "@/components/PayrollTransfer";
 import AgentCard from "@/components/AgentCard";
 import LiveActivityFeed from "@/components/LiveActivityFeed";
@@ -11,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Dashboard() {
   const agentWallet = useAgentWallet();
+  const connectedWallet = useConnectedWallet();
   const simulation = useAgentSimulation();
   const treasury = useTreasurySimulation();
 
@@ -35,9 +38,9 @@ export default function Dashboard() {
       <section>
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Operations</h2>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <ConnectedWalletCard wallet={connectedWallet} />
+          <PayrollTransfer connectedWallet={connectedWallet} agentWallet={agentWallet} />
           <AgentWalletCard wallet={agentWallet} />
-          <PayrollTransfer agentWallet={agentWallet} />
-          <TreasurySummaryWidget treasury={treasury} />
           <Card className="glass-card-strong card-lift">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Activity</CardTitle>
@@ -47,6 +50,11 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+      </section>
+
+      <section>
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Treasury</h2>
+        <TreasurySummaryWidget treasury={treasury} />
       </section>
     </div>
   );
