@@ -20,7 +20,8 @@ AI agents are moving from chat to action. Qonnek explores the missing layer betw
 
 ## Stack
 
-- Next.js
+- React
+- Vite
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
@@ -28,8 +29,36 @@ AI agents are moving from chat to action. Qonnek explores the missing layer betw
 - Lucide icons
 - Phantom Connect
 - Solana devnet
-- Helius
+- Helius-compatible RPC architecture (devnet)
 - Browser-based wallet and UI flow
+
+## Current prototype scope
+
+Qonnek is currently a frontend-first prototype optimized for hackathon demonstration.
+
+The current implementation intentionally uses:
+- frontend-only agent simulation
+- Solana devnet only
+- lightweight local state
+- mock orchestration flows
+
+The project does not yet include:
+- backend agent orchestration
+- production treasury infrastructure
+- autonomous AI execution systems
+- multi-user coordination
+- mainnet deployment
+
+## Devnet safety
+
+Qonnek is hard-locked to Solana devnet.
+
+This prototype intentionally avoids:
+- mainnet deployment
+- real fund exposure
+- production treasury risk
+
+All wallet activity and transfers shown in demos are devnet-only for safe testing and transparent verification.
 
 ## Hackathon focus
 
@@ -50,11 +79,6 @@ This repository is optimized for:
 6. Show balance update + explorer link
 7. Show treasury visuals
 
-
-## Contact
-
-Built by https://x.com/withmewtwo
-
 ## Running locally
 
 > Replace these commands with the exact commands used in your repo if needed.
@@ -62,3 +86,10 @@ Built by https://x.com/withmewtwo
 ```bash
 npm install
 npm run dev
+```
+
+## Built By
+
+Mewtwo — product strategist, ecosystem operator, and Web3-native builder focused on AI, Solana, and internet-scale coordination systems.
+Bangkok-based. Globally networked. Long-term focused.
+https://x.com/withmewtwo 
