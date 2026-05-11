@@ -11,9 +11,11 @@ export interface ConnectedWalletState {
   refreshBalance: () => Promise<void>;
 }
 
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
  * Reads the balance of the currently-connected Phantom wallet.
- * This is the wallet the user funded with devnet SOL.
+ * Includes retry with backoff for 429 rate-limit errors.
  */
 export function useConnectedWallet(): ConnectedWalletState {
   const { connection } = useConnection();
@@ -28,24 +30,42 @@ export function useConnectedWallet(): ConnectedWalletState {
   const refreshBalance = useCallback(async () => {
     if (!publicKey) return;
     setLoading(true);
-    setError(null);
-    try {
-      const lamports = await connection.getBalance(new PublicKey(publicKey));
-      setBalanceSol(lamports / LAMPORTS_PER_SOL);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Balance fetch failed");
-    } finally {
-      setLoading(false);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const lamports = await connection.getBalance(new PublicKey(publicKey));
+        setBalanceSol(lamports / LAMPORTS_PER_SOL);
+        setError(null);
+        setLoading(false);
+        return;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const is429 = msg.includes("429") || msg.includes("Too many requests");
+        if (is429 && attempt < 2) {
+          await wait((attempt + 1) * 2000);
+          continue;
+        }
+        // On 429 with cached balance, suppress error display
+        if (is429 && balanceSol !== null) {
+          setError(null);
+        } else {
+          setError(msg);
+        }
+        setLoading(false);
+        return;
+      }
     }
-  }, [connection, publicKey]);
+    setLoading(false);
+  }, [connection, publicKey, balanceSol]);
 
   useEffect(() => {
     if (!connected || !publicKey) {
       setBalanceSol(null);
       return;
     }
+    // Fetch immediately on connect
     refreshBalance();
-    const id = setInterval(refreshBalance, 30_000);
+    // Poll every 60s (reduced from 30s to avoid 429)
+    const id = setInterval(refreshBalance, 60_000);
     return () => clearInterval(id);
   }, [connected, publicKey, refreshBalance]);
 
