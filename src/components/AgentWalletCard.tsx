@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState, useCallback } from "react";
 import type { AgentWalletState } from "@/hooks/useAgentWallet";
+import { playClick, playSuccess, playError } from "@/lib/sounds";
 
 function truncate(addr: string) {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -24,6 +25,7 @@ export default function AgentWalletCard({ wallet, label = "Agent Wallet" }: Prop
   const [airdropError, setAirdropError] = useState<string | null>(null);
 
   const handleAirdrop = useCallback(async () => {
+    playClick();
     setAirdropStatus("requesting");
     setAirdropError(null);
     try {
@@ -34,17 +36,20 @@ export default function AgentWalletCard({ wallet, label = "Agent Wallet" }: Prop
       setAirdropStatus("confirming");
       await connection.confirmTransaction(sig, "confirmed");
       setAirdropStatus("success");
+      playSuccess();
       refreshBalance();
       setTimeout(() => setAirdropStatus("idle"), 4000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Airdrop failed";
       setAirdropError(msg.includes("429") ? "Rate limited — wait a moment and retry" : msg);
       setAirdropStatus("error");
+      playError();
       setTimeout(() => setAirdropStatus("idle"), 5000);
     }
   }, [connection, address, refreshBalance]);
 
   const handleCopy = () => {
+    playClick();
     navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
