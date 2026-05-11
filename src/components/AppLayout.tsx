@@ -1,8 +1,9 @@
-import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Bot, Vault, ArrowLeftRight, Activity, Menu, X,
 } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { playClick, playNav } from "@/lib/sounds";
@@ -20,6 +21,15 @@ const BOTTOM_NAV = links.slice(0, 4);
 export default function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { connected } = useWallet();
+
+  // Redirect to landing when wallet disconnects
+  useEffect(() => {
+    if (!connected) {
+      navigate("/", { replace: true });
+    }
+  }, [connected, navigate]);
 
   // Close drawer + play nav sound on route change
   const prevPath = useRef(location.pathname);
