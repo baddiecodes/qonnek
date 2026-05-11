@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useEffect } from "react";
-import { Bot, ArrowRight, Shield, Zap, TrendingUp } from "lucide-react";
 
 const features = [
   { icon: Bot, label: "Autonomous Agents" },
@@ -26,9 +25,13 @@ export default function Landing() {
 
       <div className="relative z-10 flex flex-col items-center gap-8 px-6 text-center animate-fade-in-up">
         {/* Logo icon */}
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 glow-warm">
-          <Bot className="h-8 w-8 text-primary" />
-        </div>
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 glow-warm">
+  <img
+    src="/logo.png"
+    alt="QONNEK Logo"
+    className="h-10 w-10 object-contain"
+  />
+      </div>
 
         {/* Title */}
         <div>
