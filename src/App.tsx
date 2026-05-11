@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
@@ -50,6 +51,7 @@ const App: React.FC = () => {
 
             <Toaster />
           </DevnetGuard>
+          <SpeedInsights />
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
