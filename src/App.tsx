@@ -31,10 +31,11 @@ const App: React.FC = () => {
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
           <DevnetGuard>
-
             <Routes>
+              {/* Public landing page */}
               <Route path="/" element={<Landing />} />
 
+              {/* App shell layout */}
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/agents" element={<Agents />} />
@@ -43,6 +44,7 @@ const App: React.FC = () => {
                 <Route path="/activity" element={<ActivityFeed />} />
               </Route>
 
+              {/* 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
 
