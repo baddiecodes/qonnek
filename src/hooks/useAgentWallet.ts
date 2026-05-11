@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 
@@ -14,10 +14,6 @@ export interface AgentWalletState {
   refreshBalance: () => Promise<void>;
 }
 
-/**
- * Load or create a devnet-only agent Keypair persisted in localStorage.
- * Secret key stored as JSON number array -- acceptable for devnet simulation ONLY.
- */
 function getOrCreateKeypair(): Keypair {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33,33 +29,64 @@ function getOrCreateKeypair(): Keypair {
   return kp;
 }
 
+/** Delay helper */
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export function useAgentWallet(): AgentWalletState {
   const { connection } = useConnection();
   const [keypair] = useState<Keypair>(() => getOrCreateKeypair());
   const [balanceLamports, setBalanceLamports] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const retryCount = useRef(0);
 
   const address = keypair.publicKey.toBase58();
   const balanceSol = balanceLamports !== null ? balanceLamports / LAMPORTS_PER_SOL : null;
 
   const refreshBalance = useCallback(async () => {
     setLoading(true);
-    setError(null);
-    try {
-      const lamports = await connection.getBalance(new PublicKey(keypair.publicKey));
-      setBalanceLamports(lamports);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Balance fetch failed");
-    } finally {
-      setLoading(false);
+    // Retry up to 3 times with exponential backoff on 429
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const lamports = await connection.getBalance(new PublicKey(keypair.publicKey));
+        setBalanceLamports(lamports);
+        setError(null);
+        retryCount.current = 0;
+        setLoading(false);
+        return;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const is429 = msg.includes("429") || msg.includes("Too many requests");
+        if (is429 && attempt < 2) {
+          // Exponential backoff: 2s, 4s
+          await wait((attempt + 1) * 2000);
+          continue;
+        }
+        // On 429, keep last known balance and just set a soft error
+        if (is429 && balanceLamports !== null) {
+          setError(null); // Don't show error if we have a cached value
+        } else {
+          setError(msg);
+        }
+        setLoading(false);
+        return;
+      }
     }
-  }, [connection, keypair.publicKey]);
+    setLoading(false);
+  }, [connection, keypair.publicKey, balanceLamports]);
 
   useEffect(() => {
-    refreshBalance();
-    const id = setInterval(refreshBalance, 30_000);
-    return () => clearInterval(id);
+    // Stagger initial fetch by 2s to avoid competing with useConnectedWallet
+    const initTimer = setTimeout(() => {
+      refreshBalance();
+    }, 2000);
+
+    // Poll every 60s (was 30s) to reduce RPC pressure
+    const id = setInterval(refreshBalance, 60_000);
+    return () => {
+      clearTimeout(initTimer);
+      clearInterval(id);
+    };
   }, [refreshBalance]);
 
   return { keypair, address, balanceSol, balanceLamports, loading, error, refreshBalance };
