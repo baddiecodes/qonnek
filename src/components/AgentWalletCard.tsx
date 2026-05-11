@@ -1,18 +1,48 @@
-import { RefreshCw, Wallet, Copy, Check, ExternalLink } from "lucide-react";
+import { RefreshCw, Wallet, Copy, Check, ExternalLink, Download, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { AgentWalletState } from "@/hooks/useAgentWallet";
 
 function truncate(addr: string) {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
 
+type AirdropStatus = "idle" | "requesting" | "confirming" | "success" | "error";
+
+const AIRDROP_SOL = 1;
+
 interface Props { wallet: AgentWalletState; label?: string; }
 
 export default function AgentWalletCard({ wallet, label = "Agent Wallet" }: Props) {
+  const { connection } = useConnection();
   const { address, balanceSol, loading, error, refreshBalance } = wallet;
   const [copied, setCopied] = useState(false);
+  const [airdropStatus, setAirdropStatus] = useState<AirdropStatus>("idle");
+  const [airdropError, setAirdropError] = useState<string | null>(null);
+
+  const handleAirdrop = useCallback(async () => {
+    setAirdropStatus("requesting");
+    setAirdropError(null);
+    try {
+      const sig = await connection.requestAirdrop(
+        new PublicKey(address),
+        AIRDROP_SOL * LAMPORTS_PER_SOL
+      );
+      setAirdropStatus("confirming");
+      await connection.confirmTransaction(sig, "confirmed");
+      setAirdropStatus("success");
+      refreshBalance();
+      setTimeout(() => setAirdropStatus("idle"), 4000);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Airdrop failed";
+      setAirdropError(msg.includes("429") ? "Rate limited — wait a moment and retry" : msg);
+      setAirdropStatus("error");
+      setTimeout(() => setAirdropStatus("idle"), 5000);
+    }
+  }, [connection, address, refreshBalance]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(address);
@@ -58,10 +88,33 @@ export default function AgentWalletCard({ wallet, label = "Agent Wallet" }: Prop
           </p>
         )}
 
-        <button onClick={refreshBalance} disabled={loading} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 focus-ring rounded-md py-1.5 min-h-[32px]">
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Fetching..." : "Refresh balance"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={refreshBalance} disabled={loading} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40 focus-ring rounded-md py-1.5 min-h-[32px]">
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Fetching..." : "Refresh"}
+          </button>
+          <span className="h-3 w-px bg-border/50" />
+          <button
+            onClick={handleAirdrop}
+            disabled={airdropStatus === "requesting" || airdropStatus === "confirming"}
+            className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-40 focus-ring rounded-md py-1.5 min-h-[32px]"
+          >
+            {airdropStatus === "requesting" || airdropStatus === "confirming" ? (
+              <><Loader2 className="h-3.5 w-3.5 animate-spin" />{airdropStatus === "requesting" ? "Requesting..." : "Confirming..."}</>
+            ) : airdropStatus === "success" ? (
+              <><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span className="text-success">+{AIRDROP_SOL} SOL</span></>
+            ) : (
+              <><Download className="h-3.5 w-3.5" />Airdrop {AIRDROP_SOL} SOL</>
+            )}
+          </button>
+        </div>
+
+        {airdropStatus === "error" && airdropError && (
+          <div className="flex items-start gap-2 rounded-lg border border-warning/15 bg-warning/5 px-3 py-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0 mt-0.5" />
+            <p className="text-[11px] text-warning">{airdropError}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
