@@ -33,6 +33,7 @@ export default function AppLayout() {
 
   useEffect(() => {
     document.body.style.overflow = drawerOpen ? "hidden" : "";
+
     return () => {
       document.body.style.overflow = "";
     };
@@ -48,15 +49,28 @@ export default function AppLayout() {
         className="hidden md:flex w-[220px] flex-col border-r border-sidebar-border shrink-0"
         style={{ background: "var(--gradient-sidebar)" }}
       >
+        {/* Logo */}
         <div className="px-5 pt-5 pb-5">
-          <span className="text-lg font-extrabold gradient-text tracking-tight select-none">
-            QONNEK
-          </span>
-          <p className="text-[11px] text-muted-foreground/50 mt-0.5 font-medium">
-            AI Agent Payroll
-          </p>
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="QONNEK Logo"
+              className="h-9 w-9 rounded-lg object-contain"
+            />
+
+            <div>
+              <span className="block text-lg font-extrabold gradient-text tracking-tight select-none">
+                QONNEK
+              </span>
+
+              <p className="text-[11px] text-muted-foreground/50 font-medium">
+                AI Agent Payroll
+              </p>
+            </div>
+          </div>
         </div>
 
+        {/* Sidebar nav */}
         <nav className="flex-1 space-y-0.5 px-3">
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink
@@ -75,6 +89,7 @@ export default function AppLayout() {
                   {isActive && (
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary" />
                   )}
+
                   <Icon className="h-4 w-4" />
                   {label}
                 </>
@@ -83,9 +98,11 @@ export default function AppLayout() {
           ))}
         </nav>
 
+        {/* Sidebar footer */}
         <div className="px-4 py-4 border-t border-sidebar-border/60">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-green-500" />
+
             <span className="text-[11px] font-mono text-green-400 uppercase tracking-wide">
               devnet
             </span>
@@ -97,6 +114,7 @@ export default function AppLayout() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top bar */}
         <header className="flex items-center justify-between border-b border-border/50 px-4 sm:px-6 h-14 shrink-0 bg-background">
+          {/* Mobile left section */}
           <div className="flex items-center gap-3 md:hidden">
             <button
               onClick={openDrawer}
@@ -104,16 +122,28 @@ export default function AppLayout() {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <span className="text-base font-bold">QONNEK</span>
+
+            <div className="flex items-center gap-2">
+              <img
+                src="/logo.png"
+                alt="QONNEK Logo"
+                className="h-7 w-7 rounded-md object-contain"
+              />
+
+              <span className="text-base font-bold">QONNEK</span>
+            </div>
           </div>
 
+          {/* Desktop network badge */}
           <div className="hidden md:flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-green-500" />
+
             <span className="text-xs text-muted-foreground">
               Solana Devnet
             </span>
           </div>
 
+          {/* Wallet */}
           <div className="ml-auto">
             <WalletMultiButton />
           </div>
@@ -131,10 +161,21 @@ export default function AppLayout() {
           <span>© {new Date().getFullYear()} QONNEK</span>
 
           <div className="flex gap-4">
-            <a href="https://github.com/baddiecodes/qonnek" target="_blank" rel="noreferrer">
+            <a
+              href="https://github.com/baddiecodes/qonnek"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-foreground transition-colors"
+            >
               GitHub
             </a>
-            <a href="https://twitter.com/xqonnek" target="_blank" rel="noreferrer">
+
+            <a
+              href="https://twitter.com/xqonnek"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-foreground transition-colors"
+            >
               X
             </a>
           </div>
@@ -145,6 +186,7 @@ export default function AppLayout() {
       <AnimatePresence>
         {drawerOpen && (
           <>
+            {/* Backdrop */}
             <motion.div
               className="fixed inset-0 z-50 bg-black/50 md:hidden"
               initial={{ opacity: 0 }}
@@ -153,22 +195,38 @@ export default function AppLayout() {
               onClick={closeDrawer}
             />
 
+            {/* Drawer */}
             <motion.aside
               className="fixed left-0 top-0 bottom-0 z-50 w-[260px] bg-background md:hidden"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
             >
-              <div className="p-4 flex justify-between">
-                <span className="font-bold">QONNEK</span>
+              {/* Drawer header */}
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <img
+                    src="/logo.png"
+                    alt="QONNEK Logo"
+                    className="h-8 w-8 rounded-md object-contain"
+                  />
+
+                  <span className="font-bold text-base">QONNEK</span>
+                </div>
+
                 <button onClick={closeDrawer}>
                   <X />
                 </button>
               </div>
 
+              {/* Drawer nav */}
               <nav className="px-3 space-y-1">
                 {links.map(({ to, label, icon: Icon }) => (
-                  <NavLink key={to} to={to} className="flex items-center gap-2 p-2">
+                  <NavLink
+                    key={to}
+                    to={to}
+                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+                  >
                     <Icon className="h-4 w-4" />
                     {label}
                   </NavLink>
@@ -182,7 +240,11 @@ export default function AppLayout() {
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 md:hidden border-t bg-background flex justify-around">
         {BOTTOM_NAV.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} className="flex flex-col items-center p-2 text-xs">
+          <NavLink
+            key={to}
+            to={to}
+            className="flex flex-col items-center p-2 text-xs"
+          >
             <Icon className="h-5 w-5" />
             {label}
           </NavLink>
