@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Send, ExternalLink, CheckCircle2, Loader2, AlertTriangle, ArrowDown } from "lucide-react";
 import type { AgentWalletState } from "@/hooks/useAgentWallet";
 import type { ConnectedWalletState } from "@/hooks/useConnectedWallet";
+import { playClick, playSuccess, playError } from "@/lib/sounds";
 
 function truncate(s: string) { return `${s.slice(0, 6)}...${s.slice(-4)}`; }
 
@@ -38,6 +39,7 @@ export default function PayrollTransfer({ connectedWallet, agentWallet }: Props)
 
   const handleTransfer = async () => {
     if (!publicKey) return;
+    playClick();
     setStatus("sending");
     setTxSig(null);
     setErrorMsg(null);
@@ -56,12 +58,14 @@ export default function PayrollTransfer({ connectedWallet, agentWallet }: Props)
 
       setTxSig(signature);
       setStatus("success");
+      playSuccess();
       // Refresh both wallets
       connectedWallet.refreshBalance();
       agentWallet.refreshBalance();
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Transfer failed");
       setStatus("error");
+      playError();
     }
   };
 
