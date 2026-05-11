@@ -11,9 +11,7 @@ export default {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
       fontFamily: {
@@ -87,44 +85,19 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "pulse-glow": {
-          "0%, 100%": { opacity: "0.4" },
-          "50%": { opacity: "1" },
-        },
-        float: {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-6px)" },
-        },
-        shimmer: {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
-        },
-        "data-stream": {
-          "0%": { backgroundPosition: "0% 0%" },
-          "100%": { backgroundPosition: "0% 100%" },
-        },
-        "border-glow-pulse": {
-          "0%, 100%": { borderColor: "hsl(186 100% 50% / 0.1)" },
-          "50%": { borderColor: "hsl(186 100% 50% / 0.3)" },
-        },
         "fade-in-up": {
-          from: { opacity: "0", transform: "translateY(8px)" },
+          from: { opacity: "0", transform: "translateY(6px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "skeleton-pulse": {
-          "0%, 100%": { opacity: "0.35" },
-          "50%": { opacity: "0.6" },
+          "0%, 100%": { opacity: "0.3" },
+          "50%": { opacity: "0.5" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
-        float: "float 3s ease-in-out infinite",
-        shimmer: "shimmer 2s linear infinite",
-        "data-stream": "data-stream 3s linear infinite",
-        "border-glow-pulse": "border-glow-pulse 3s ease-in-out infinite",
-        "fade-in-up": "fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "fade-in-up": "fade-in-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         "skeleton-pulse": "skeleton-pulse 1.8s ease-in-out infinite",
       },
     },
