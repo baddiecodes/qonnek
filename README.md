@@ -25,12 +25,17 @@ AI agents are moving from chat to action. Qonnek explores the missing layer betw
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
+- Solana devnet
 - Framer Motion
 - Lucide icons
-- Phantom Connect
-- Solana devnet
+- Phantom Wallet Adapter
+- Solana Web3.js
 - Helius-compatible RPC architecture (devnet)
 - Browser-based wallet and UI flow
+
+The prototype uses Phantom wallet connectivity, Solana Web3.js, devnet transaction flows, and Helius-compatible RPC infrastructure for realtime wallet state and transaction confirmation.
+
+The treasury coordination UX was influenced by emerging programmable finance infrastructure within the Solana ecosystem.
 
 ## Current prototype scope
 
